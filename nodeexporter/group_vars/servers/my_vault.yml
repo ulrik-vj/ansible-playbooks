@@ -1,0 +1,9 @@
+my_vault:
+  192.168.50.51:
+    ansible_password: password1
+  192.168.50.52:
+    ansible_password: password2
+  192.168.50.53:
+    ansible_password: password3
+  192.168.50.54:
+    ansible_password: password4

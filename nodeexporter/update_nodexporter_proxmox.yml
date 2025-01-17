@@ -1,0 +1,27 @@
+- name: Run custom script and upgrade pip on specific host
+  hosts: servers  # Applies to all hosts in the 'servers' group
+  gather_facts: false
+  tasks:
+    - name: Load excluded IPs from file. See exclude_ips.txt for info
+      set_fact:
+        excluded_ips: "{{ lookup('file', 'exclude_ips.txt').splitlines() | default([]) }}"  # Reads the IPs from the file
+
+    - name: Upgrade promethus node exporter on proxmox host
+      become: true
+      vars:
+        ansible_become_pass: "{{ ansible_password }}"
+      command: /opt/prometheus-pve-exporter/bin/pip install --upgrade prometheus-pve-exporter  # Replace path, with where your node exporter is installed at.
+      when: inventory_hostname == "192.168.XX.XX" # YOUR PROXMOX HOST HERE
+
+    - name: Run custom script on all servers, except specific hosts listed in exclude_ips.txt
+      become: true
+      vars:
+        ansible_become_pass: "{{ ansible_password }}"
+      script: scripts/update-nodeexporter.sh
+      when: inventory_hostname not in excluded_ips  # Exclude hosts from the list
+      register: shell_result
+
+    - name: Output the result of the script.
+      debug:
+        var: shell_result.stdout_lines
+      when: inventory_hostname not in excluded_ips and shell_result is defined

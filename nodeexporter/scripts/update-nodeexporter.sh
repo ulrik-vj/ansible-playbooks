@@ -23,19 +23,20 @@ get_architecture() {
   esac
 }
 
-# Stop and disable node exporter service if it exists
-if systemctl is-active --quiet node_exporter; then
-  sudo systemctl stop node_exporter
-  sudo systemctl disable node_exporter
+# Fetch the latest version from GitHub and remove the 'v'
+latest_version=$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+
+# Fetch the running version of Node Exporter
+running_version=$(/usr/local/bin/node_exporter --version | grep -oP 'version \K[0-9]+\.[0-9]+\.[0-9]+')
+
+# Compare versions and exit if they match
+if [ "$latest_version" == "$running_version" ]; then
+    echo "Node Exporter is already the latest version ($latest_version). Exiting script."
+    exit 0
 fi
 
-# Check if node exporter binary exists and remove it
-if [ -f /usr/local/bin/node_exporter ]; then
-  sudo rm -f /usr/local/bin/node_exporter
-else
-  echo "Node exporter binary not found in /usr/local/bin"
-  exit 1
-fi
+# Proceed with update logic if versions don't match
+echo "Node Exporter is outdated. Running version: $running_version, Latest version: $latest_version. Proceeding with update..."
 
 # Determine the appropriate release URL based on architecture
 release_url=$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest \
@@ -43,6 +44,17 @@ release_url=$(curl -s https://api.github.com/repos/prometheus/node_exporter/rele
   | grep "$(get_architecture)" \
   | cut -d : -f 2,3 \
   | tr -d "\"")
+  
+# Stop and disable node exporter service if it exists
+if systemctl is-active --quiet node_exporter; then
+  sudo systemctl stop node_exporter
+  sudo systemctl disable node_exporter
+fi
+
+# Check if node exporter binary exists and remove it. So we can replace with new one.
+if [ -f /usr/local/bin/node_exporter ]; then
+  sudo rm -f /usr/local/bin/node_exporter
+fi
 
 # Download the latest node exporter release
 wget -q $release_url

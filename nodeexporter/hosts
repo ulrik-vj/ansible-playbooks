@@ -1,0 +1,5 @@
+[servers]
+192.168.50.51  ansible_user=user1
+192.168.50.52  ansible_user=user2
+192.168.50.53  ansible_user=user3
+192.168.50.54  ansible_user=user4
