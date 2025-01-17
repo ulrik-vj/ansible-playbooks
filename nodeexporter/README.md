@@ -1,6 +1,6 @@
 # How to setup the playbook for your environment
 
-1. Add IPs to your servers in hosts file
+1. Add IPs to your servers in hosts file. Including your proxmox IP.
 2. If any IPs should be excluded and not checked during the updating, add them here
 3. In the playbook add your Proxmox host to this line
 
