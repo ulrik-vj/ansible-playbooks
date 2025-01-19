@@ -3,17 +3,22 @@
   gather_facts: false
   tasks:
     - name: Load excluded IPs from file. See exclude_ips.txt for info
-      set_fact:
-        excluded_ips: "{{ lookup('file', 'exclude_ips.txt').splitlines() | default([]) }}"  # Reads the IPs from the file
+      set_fact: 
+        excluded_ips: >
+          {{ lookup('file', 'exclude_ips.txt')
+             .splitlines() | default([]) }}
+          # Reads the IPs from the file
 
     - name: Upgrade promethus node exporter on proxmox host
       become: true
       vars:
         ansible_become_pass: "{{ ansible_password }}"
-      command: /opt/prometheus-pve-exporter/bin/pip install --upgrade prometheus-pve-exporter  # Replace path, with where your node exporter is installed at.
-      when: inventory_hostname == "192.168.XX.XX" # YOUR PROXMOX HOST HERE
+      shell: |
+        /opt/prometheus-pve-exporter/bin/pip install --upgrade prometheus-pve-exporter
+        # Replace with the desired pip version or binary
+      when: inventory_hostname == "192.168.XX.XX"  # Insert your proxmox ip
 
-    - name: Run custom script on all servers, except specific hosts listed in exclude_ips.txt
+    - name: Run custom script on all servers, except hosts listed in exclude_ips.txt
       become: true
       vars:
         ansible_become_pass: "{{ ansible_password }}"
